@@ -5,9 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Loader2, AlertTriangle, Settings2, Wrench } from 'lucide-react';
+import { Trash2, Loader2, AlertTriangle, Settings2, Wrench, Gauge } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutConfiguration } from '@/components/LayoutConfiguration';
+import { ThresholdConfiguration } from '@/components/ThresholdConfiguration';
 
 const Settings = () => {
   const { session } = useAuth();
