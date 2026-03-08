@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Calves from "./pages/Calves";
 import TagManagement from "./pages/TagManagement";
+import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Wifi, LogOut, Loader2 } from "lucide-react";
@@ -71,6 +72,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Index />} />
         <Route path="/calves" element={<Calves />} />
         <Route path="/tags" element={<TagManagement />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
