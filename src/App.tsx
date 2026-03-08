@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Wifi, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProfilePopover } from "@/components/ProfilePopover";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
                 <Wifi className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">Gateway Online</span>
               </div>
+              <ProfilePopover textColor={config.topbarTextColor} />
               <Button
                 variant="ghost"
                 size="icon"
