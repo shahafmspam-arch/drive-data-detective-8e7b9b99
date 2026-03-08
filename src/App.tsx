@@ -44,6 +44,7 @@ const App = () => (
         <AppLayout>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/calves" element={<Calves />} />
             <Route path="/tags" element={<TagManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
