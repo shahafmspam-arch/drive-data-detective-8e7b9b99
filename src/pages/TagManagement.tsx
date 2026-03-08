@@ -198,15 +198,15 @@ const TagManagement = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tag ID</TableHead>
-              <TableHead>Calf #</TableHead>
-              <TableHead>Gender</TableHead>
+              <SortableHead label="Tag ID" sortKey="tag_id" {...headProps} />
+              <SortableHead label="Calf #" sortKey="calf_number" {...headProps} />
+              <SortableHead label="Gender" sortKey="gender" {...headProps} />
               <TableHead>MAC Address</TableHead>
-              <TableHead>Birth Date</TableHead>
+              <SortableHead label="Birth Date" sortKey="birth_date" {...headProps} />
               <TableHead>Age</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Battery</TableHead>
-              <TableHead>Signal</TableHead>
+              <SortableHead label="Status" sortKey="status" {...headProps} />
+              <SortableHead label="Battery" sortKey="battery_mv" {...headProps} />
+              <SortableHead label="Signal" sortKey="rssi" {...headProps} />
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
