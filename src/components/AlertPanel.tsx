@@ -1,11 +1,21 @@
-import { CalfAlert } from '@/data/mockCalves';
 import { AlertTriangle, Flame, Snowflake, Moon, Battery, AlertCircle, WifiOff } from 'lucide-react';
 
-interface AlertPanelProps {
-  alerts: CalfAlert[];
+interface AlertItem {
+  id: string;
+  calf_id: string;
+  calfLabel: string;
+  type: 'fever' | 'hypothermia' | 'inactive' | 'low_battery' | 'sos' | 'offline';
+  message: string;
+  severity: 'warning' | 'critical';
+  acknowledged: boolean;
+  created_at: string;
 }
 
-const alertIcon: Record<CalfAlert['type'], React.ElementType> = {
+interface AlertPanelProps {
+  alerts: AlertItem[];
+}
+
+const alertIcon: Record<string, React.ElementType> = {
   fever: Flame,
   hypothermia: Snowflake,
   inactive: Moon,
@@ -34,7 +44,7 @@ export const AlertPanel = ({ alerts }: AlertPanelProps) => {
       ) : (
         <div className="space-y-3 max-h-80 overflow-y-auto">
           {unacknowledged.map(alert => {
-            const Icon = alertIcon[alert.type];
+            const Icon = alertIcon[alert.type] || AlertCircle;
             const isCritical = alert.severity === 'critical';
             return (
               <div
@@ -49,7 +59,7 @@ export const AlertPanel = ({ alerts }: AlertPanelProps) => {
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{alert.calfLabel}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{new Date(alert.created_at).toLocaleString()}</p>
                 </div>
               </div>
             );

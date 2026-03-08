@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          acknowledged: boolean
+          calf_id: string
+          created_at: string
+          id: string
+          message: string
+          severity: string
+          type: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          calf_id: string
+          created_at?: string
+          id?: string
+          message: string
+          severity?: string
+          type: string
+        }
+        Update: {
+          acknowledged?: boolean
+          calf_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          severity?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_calf_id_fkey"
+            columns: ["calf_id"]
+            isOneToOne: false
+            referencedRelation: "calves"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calves: {
+        Row: {
+          age: string | null
+          birth_date: string | null
+          calf_number: number
+          created_at: string
+          gender: string
+          id: string
+          notes: string | null
+          tag_id: string
+          tag_mac: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: string | null
+          birth_date?: string | null
+          calf_number: number
+          created_at?: string
+          gender?: string
+          id?: string
+          notes?: string | null
+          tag_id: string
+          tag_mac: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: string | null
+          birth_date?: string | null
+          calf_number?: number
+          created_at?: string
+          gender?: string
+          id?: string
+          notes?: string | null
+          tag_id?: string
+          tag_mac?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -40,6 +120,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      telemetry: {
+        Row: {
+          activity: string
+          battery_mv: number
+          calf_id: string
+          created_at: string
+          id: string
+          motion_state: number
+          rssi: number
+          temperature: number
+        }
+        Insert: {
+          activity?: string
+          battery_mv?: number
+          calf_id: string
+          created_at?: string
+          id?: string
+          motion_state?: number
+          rssi?: number
+          temperature?: number
+        }
+        Update: {
+          activity?: string
+          battery_mv?: number
+          calf_id?: string
+          created_at?: string
+          id?: string
+          motion_state?: number
+          rssi?: number
+          temperature?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telemetry_calf_id_fkey"
+            columns: ["calf_id"]
+            isOneToOne: false
+            referencedRelation: "calves"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

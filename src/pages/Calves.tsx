@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { mockCalves, CalfTag, getCalfLabel } from '@/data/mockCalves';
+import { useCalves, CalfWithTelemetry, getCalfLabel } from '@/hooks/useCalves';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalfDetailDialog } from '@/components/CalfDetailDialog';
-import { Thermometer, Activity, Battery, Signal, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Thermometer, Activity, Battery, Signal, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 const batteryPercent = (mv: number) => mv === 0 ? 0 : Math.min(100, Math.max(0, Math.round(((mv - 2000) / 1400) * 100)));
 
@@ -15,25 +15,25 @@ const statusColors: Record<string, string> = {
   offline: 'bg-muted text-muted-foreground border-muted',
 };
 
-type SortKey = 'calfNumber' | 'gender' | 'temperature' | 'activity' | 'status' | 'batteryMv' | 'rssi' | 'lastSeen' | 'age';
+type SortKey = 'calf_number' | 'gender' | 'temperature' | 'activity' | 'status' | 'battery_mv' | 'rssi' | 'last_seen' | 'age';
 type SortDir = 'asc' | 'desc';
 
 const statusOrder: Record<string, number> = { critical: 0, warning: 1, healthy: 2, offline: 3 };
 const activityOrder: Record<string, number> = { inactive: 0, resting: 1, active: 2 };
 
-function sortCalves(calves: CalfTag[], key: SortKey, dir: SortDir): CalfTag[] {
+function sortCalves(calves: CalfWithTelemetry[], key: SortKey, dir: SortDir): CalfWithTelemetry[] {
   return [...calves].sort((a, b) => {
     let cmp = 0;
     switch (key) {
-      case 'calfNumber': cmp = a.calfNumber - b.calfNumber; break;
+      case 'calf_number': cmp = a.calf_number - b.calf_number; break;
       case 'gender': cmp = a.gender.localeCompare(b.gender); break;
       case 'temperature': cmp = a.temperature - b.temperature; break;
-      case 'activity': cmp = activityOrder[a.activity] - activityOrder[b.activity]; break;
-      case 'status': cmp = statusOrder[a.status] - statusOrder[b.status]; break;
-      case 'batteryMv': cmp = a.batteryMv - b.batteryMv; break;
+      case 'activity': cmp = (activityOrder[a.activity] || 0) - (activityOrder[b.activity] || 0); break;
+      case 'status': cmp = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0); break;
+      case 'battery_mv': cmp = a.battery_mv - b.battery_mv; break;
       case 'rssi': cmp = a.rssi - b.rssi; break;
-      case 'lastSeen': cmp = a.lastSeen.localeCompare(b.lastSeen); break;
-      case 'age': cmp = a.age.localeCompare(b.age); break;
+      case 'last_seen': cmp = (a.last_seen || '').localeCompare(b.last_seen || ''); break;
+      case 'age': cmp = (a.age || '').localeCompare(b.age || ''); break;
     }
     return dir === 'asc' ? cmp : -cmp;
   });
@@ -57,9 +57,10 @@ const SortableHead = ({ label, sortKey, currentKey, currentDir, onSort }: {
 const activityIcon = (a: string) => a === 'active' ? '🟢' : a === 'resting' ? '🔵' : '⚪';
 
 const Calves = () => {
-  const [sortKey, setSortKey] = useState<SortKey>('calfNumber');
+  const { calves, isLoading } = useCalves();
+  const [sortKey, setSortKey] = useState<SortKey>('calf_number');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [selectedCalfId, setSelectedCalfId] = useState<string | null>(null);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -70,10 +71,18 @@ const Calves = () => {
     }
   };
 
-  const sorted = useMemo(() => sortCalves(mockCalves, sortKey, sortDir), [sortKey, sortDir]);
-  const selectedCalf = mockCalves.find(c => c.tagId === selectedTagId) ?? null;
+  const sorted = useMemo(() => sortCalves(calves, sortKey, sortDir), [calves, sortKey, sortDir]);
+  const selectedCalf = calves.find(c => c.id === selectedCalfId) ?? null;
 
   const headProps = { currentKey: sortKey, currentDir: sortDir, onSort: handleSort };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -86,34 +95,34 @@ const Calves = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <SortableHead label="Calf #" sortKey="calfNumber" {...headProps} />
+              <SortableHead label="Calf #" sortKey="calf_number" {...headProps} />
               <SortableHead label="Gender" sortKey="gender" {...headProps} />
               <SortableHead label="Age" sortKey="age" {...headProps} />
               <SortableHead label="Status" sortKey="status" {...headProps} />
               <SortableHead label="Temp" sortKey="temperature" {...headProps} />
               <SortableHead label="Activity" sortKey="activity" {...headProps} />
-              <SortableHead label="Battery" sortKey="batteryMv" {...headProps} />
+              <SortableHead label="Battery" sortKey="battery_mv" {...headProps} />
               <SortableHead label="Signal" sortKey="rssi" {...headProps} />
-              <SortableHead label="Last Seen" sortKey="lastSeen" {...headProps} />
+              <SortableHead label="Last Seen" sortKey="last_seen" {...headProps} />
               <TableHead>Alerts</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sorted.map(calf => {
-              const bp = batteryPercent(calf.batteryMv);
+              const bp = batteryPercent(calf.battery_mv);
               const activeAlerts = calf.alerts.filter(a => !a.acknowledged).length;
               return (
                 <TableRow
-                  key={calf.tagId}
+                  key={calf.id}
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => setSelectedTagId(calf.tagId)}
+                  onClick={() => setSelectedCalfId(calf.id)}
                 >
                   <TableCell className="font-heading font-semibold">
                     {getCalfLabel(calf)}
-                    <span className="text-xs text-muted-foreground ml-2 font-normal">{calf.tagId}</span>
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">{calf.tag_id}</span>
                   </TableCell>
                   <TableCell>{calf.gender === 'male' ? '♂' : '♀'}</TableCell>
-                  <TableCell>{calf.age}</TableCell>
+                  <TableCell>{calf.age || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={statusColors[calf.status]}>{calf.status}</Badge>
                   </TableCell>
@@ -132,7 +141,7 @@ const Calves = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {calf.batteryMv > 0 ? (
+                    {calf.battery_mv > 0 ? (
                       <span className={`flex items-center gap-1 ${bp < 30 ? 'text-warning font-medium' : ''}`}>
                         <Battery className="h-3.5 w-3.5 text-muted-foreground" />
                         {bp}%
@@ -147,7 +156,9 @@ const Calves = () => {
                       </span>
                     ) : '—'}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{calf.lastSeen}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {calf.last_seen ? new Date(calf.last_seen).toLocaleString() : 'Never'}
+                  </TableCell>
                   <TableCell>
                     {activeAlerts > 0 ? (
                       <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
@@ -160,14 +171,21 @@ const Calves = () => {
                 </TableRow>
               );
             })}
+            {sorted.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  No calves registered yet. Go to Tag Management to add your first calf.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
 
       <CalfDetailDialog
         calf={selectedCalf}
-        open={!!selectedTagId}
-        onOpenChange={open => !open && setSelectedTagId(null)}
+        open={!!selectedCalfId}
+        onOpenChange={open => !open && setSelectedCalfId(null)}
       />
     </div>
   );

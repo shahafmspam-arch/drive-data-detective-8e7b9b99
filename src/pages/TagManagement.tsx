@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { mockCalves, CalfTag, CalfGender } from '@/data/mockCalves';
+import { useCalves, CalfWithTelemetry } from '@/hooks/useCalves';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Tag, Battery, Signal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, Battery, Signal, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 const batteryPercent = (mv: number) => Math.min(100, Math.max(0, Math.round(((mv - 2000) / 1400) * 100)));
 
@@ -23,7 +26,7 @@ interface TagFormData {
   tagId: string;
   tagMac: string;
   calfNumber: string;
-  gender: CalfGender;
+  gender: 'male' | 'female';
   age: string;
   notes: string;
 }
@@ -32,75 +35,96 @@ const emptyForm: TagFormData = { tagId: '', tagMac: '', calfNumber: '', gender: 
 
 const TagManagement = () => {
   const { toast } = useToast();
-  const [tags, setTags] = useState<CalfTag[]>([...mockCalves]);
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const { calves, isLoading } = useCalves();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TagFormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+
+  const userId = session?.user?.id;
 
   const openAdd = () => {
-    setEditingTag(null);
+    setEditingId(null);
     setForm(emptyForm);
     setDialogOpen(true);
   };
 
-  const openEdit = (tag: CalfTag) => {
-    setEditingTag(tag.tagId);
+  const openEdit = (calf: CalfWithTelemetry) => {
+    setEditingId(calf.id);
     setForm({
-      tagId: tag.tagId,
-      tagMac: tag.tagMac,
-      calfNumber: String(tag.calfNumber),
-      gender: tag.gender,
-      age: tag.age,
-      notes: tag.notes || '',
+      tagId: calf.tag_id,
+      tagMac: calf.tag_mac,
+      calfNumber: String(calf.calf_number),
+      gender: calf.gender,
+      age: calf.age || '',
+      notes: calf.notes || '',
     });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
-    if (!form.tagId || !form.tagMac || !form.calfNumber) {
+  const handleSave = async () => {
+    if (!form.tagId || !form.tagMac || !form.calfNumber || !userId) {
       toast({ title: 'Missing fields', description: 'Tag ID, MAC, and Calf Number are required.', variant: 'destructive' });
       return;
     }
 
-    if (editingTag) {
-      setTags(prev =>
-        prev.map(t =>
-          t.tagId === editingTag
-            ? { ...t, tagId: form.tagId, tagMac: form.tagMac, calfNumber: Number(form.calfNumber), gender: form.gender, age: form.age, notes: form.notes }
-            : t
-        )
-      );
-      toast({ title: 'Tag updated', description: `Tag ${form.tagId} has been updated.` });
-    } else {
-      const newTag: CalfTag = {
-        tagId: form.tagId,
-        tagMac: form.tagMac,
-        calfNumber: Number(form.calfNumber),
-        gender: form.gender,
-        age: form.age,
-        status: 'offline',
-        temperature: 0,
-        temperatureHistory: [],
-        activity: 'inactive',
-        motionState: 0,
-        rssi: 0,
-        batteryMv: 0,
-        lastSeen: 'Never',
-        alerts: [],
-        dailyActivityMinutes: 0,
-        dailyRestMinutes: 0,
-        notes: form.notes,
-      };
-      setTags(prev => [...prev, newTag]);
-      toast({ title: 'Tag added', description: `Tag ${form.tagId} has been registered.` });
+    setSaving(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase.from('calves').update({
+          tag_id: form.tagId,
+          tag_mac: form.tagMac,
+          calf_number: Number(form.calfNumber),
+          gender: form.gender,
+          age: form.age || null,
+          notes: form.notes || null,
+        }).eq('id', editingId);
+
+        if (error) throw error;
+        toast({ title: 'Tag updated', description: `Tag ${form.tagId} has been updated.` });
+      } else {
+        const { error } = await supabase.from('calves').insert({
+          user_id: userId,
+          tag_id: form.tagId,
+          tag_mac: form.tagMac,
+          calf_number: Number(form.calfNumber),
+          gender: form.gender,
+          age: form.age || null,
+          notes: form.notes || null,
+        });
+
+        if (error) throw error;
+        toast({ title: 'Tag added', description: `Tag ${form.tagId} has been registered.` });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['calves', userId] });
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (tagId: string) => {
-    setTags(prev => prev.filter(t => t.tagId !== tagId));
-    toast({ title: 'Tag removed', description: `Tag ${tagId} has been deleted.` });
+  const handleDelete = async (calf: CalfWithTelemetry) => {
+    const { error } = await supabase.from('calves').delete().eq('id', calf.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['calves', userId] });
+    toast({ title: 'Tag removed', description: `Tag ${calf.tag_id} has been deleted.` });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -131,52 +155,52 @@ const TagManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tags.map(tag => (
-              <TableRow key={tag.tagId}>
+            {calves.map(calf => (
+              <TableRow key={calf.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                    {tag.tagId}
+                    {calf.tag_id}
                   </div>
                 </TableCell>
-                <TableCell className="font-heading font-semibold">#{tag.calfNumber}</TableCell>
-                <TableCell>{tag.gender === 'male' ? '♂ Male' : '♀ Female'}</TableCell>
-                <TableCell className="font-mono text-xs">{tag.tagMac}</TableCell>
-                <TableCell>{tag.age}</TableCell>
+                <TableCell className="font-heading font-semibold">#{calf.calf_number}</TableCell>
+                <TableCell>{calf.gender === 'male' ? '♂ Male' : '♀ Female'}</TableCell>
+                <TableCell className="font-mono text-xs">{calf.tag_mac}</TableCell>
+                <TableCell>{calf.age || 'N/A'}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusColors[tag.status]}>
-                    {tag.status}
+                  <Badge variant="outline" className={statusColors[calf.status]}>
+                    {calf.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {tag.batteryMv > 0 ? (
+                  {calf.battery_mv > 0 ? (
                     <div className="flex items-center gap-1">
                       <Battery className="h-3.5 w-3.5 text-muted-foreground" />
-                      {batteryPercent(tag.batteryMv)}%
+                      {batteryPercent(calf.battery_mv)}%
                     </div>
                   ) : '—'}
                 </TableCell>
                 <TableCell>
-                  {tag.rssi !== 0 ? (
+                  {calf.rssi !== 0 ? (
                     <div className="flex items-center gap-1">
                       <Signal className="h-3.5 w-3.5 text-muted-foreground" />
-                      {tag.rssi} dBm
+                      {calf.rssi} dBm
                     </div>
                   ) : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(tag)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(calf)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(tag.tagId)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(calf)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
-            {tags.length === 0 && (
+            {calves.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No tags registered. Click "Add Tag" to get started.
@@ -191,7 +215,7 @@ const TagManagement = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-heading">{editingTag ? 'Edit Tag' : 'Register New Tag'}</DialogTitle>
+            <DialogTitle className="font-heading">{editingId ? 'Edit Tag' : 'Register New Tag'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
@@ -211,7 +235,7 @@ const TagManagement = () => {
               </div>
               <div className="space-y-2">
                 <Label>Gender</Label>
-                <Select value={form.gender} onValueChange={(v: CalfGender) => setForm(f => ({ ...f, gender: v }))}>
+                <Select value={form.gender} onValueChange={(v: 'male' | 'female') => setForm(f => ({ ...f, gender: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="female">♀ Female</SelectItem>
@@ -231,7 +255,10 @@ const TagManagement = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editingTag ? 'Save Changes' : 'Add Tag'}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingId ? 'Save Changes' : 'Add Tag'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
