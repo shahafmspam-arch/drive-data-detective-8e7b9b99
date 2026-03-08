@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LayoutConfigProvider, useLayoutConfig } from "@/contexts/LayoutConfigContext";
 import Index from "./pages/Index";
 import Calves from "./pages/Calves";
 import TagManagement from "./pages/TagManagement";
@@ -19,26 +20,53 @@ const queryClient = new QueryClient();
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { signOut } = useAuth();
+  const { config } = useLayoutConfig();
+
+  const isSingleColumn = config.layoutMode === 'single-column';
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!config.sidebarCollapsed}>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        {!isSingleColumn && <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-10 px-4">
-            <SidebarTrigger />
+          <header
+            className="h-14 flex items-center justify-between border-b sticky top-0 z-10 px-4 backdrop-blur-sm"
+            style={{
+              backgroundColor: config.topbarBg,
+              color: config.topbarTextColor,
+            }}
+          >
+            {!isSingleColumn && <SidebarTrigger style={{ color: config.topbarTextColor }} />}
+            {isSingleColumn && <div />}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 text-success">
                 <Wifi className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">Gateway Online</span>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={signOut} title="Sign out">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                style={{ color: config.topbarTextColor }}
+                onClick={signOut}
+                title="Sign out"
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-6">
-            {children}
+          <main
+            className={`flex-1 p-6 ${config.pageTransition ? 'animate-in fade-in duration-300' : ''}`}
+          >
+            {config.layoutMode === 'double-column' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="col-span-full">{children}</div>
+              </div>
+            ) : isSingleColumn ? (
+              <div className="max-w-4xl mx-auto">{children}</div>
+            ) : (
+              children
+            )}
           </main>
         </div>
       </div>
@@ -87,7 +115,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <LayoutConfigProvider>
+            <AppRoutes />
+          </LayoutConfigProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
