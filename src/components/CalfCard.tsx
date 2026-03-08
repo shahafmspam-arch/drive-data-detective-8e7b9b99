@@ -1,20 +1,20 @@
-import { CalfTag, CalfStatus, getCalfLabel } from '@/data/mockCalves';
+import { CalfWithTelemetry, getCalfLabel } from '@/hooks/useCalves';
 import { Thermometer, Activity, Battery, Signal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface CalfCardProps {
-  calf: CalfTag;
-  onClick: (tagId: string) => void;
+  calf: CalfWithTelemetry;
+  onClick: () => void;
 }
 
-const statusConfig: Record<CalfStatus, { label: string; className: string }> = {
+const statusConfig: Record<string, { label: string; className: string }> = {
   healthy: { label: 'Healthy', className: 'bg-success/15 text-success border-success/30' },
   warning: { label: 'Warning', className: 'bg-warning/15 text-warning-foreground border-warning/30' },
   critical: { label: 'Critical', className: 'bg-destructive/15 text-destructive border-destructive/30 animate-pulse-soft' },
   offline: { label: 'Offline', className: 'bg-muted text-muted-foreground border-muted' },
 };
 
-const activityIcon = (activity: CalfTag['activity']) => {
+const activityIcon = (activity: string) => {
   if (activity === 'active') return '🟢';
   if (activity === 'resting') return '🔵';
   return '⚪';
@@ -25,15 +25,15 @@ const batteryPercent = (mv: number) => {
   return Math.min(100, Math.max(0, Math.round(((mv - 2000) / 1400) * 100)));
 };
 
-const genderIcon = (g: CalfTag['gender']) => g === 'male' ? '♂' : '♀';
+const genderIcon = (g: string) => g === 'male' ? '♂' : '♀';
 
 export const CalfCard = ({ calf, onClick }: CalfCardProps) => {
   const sc = statusConfig[calf.status];
-  const bp = batteryPercent(calf.batteryMv);
+  const bp = batteryPercent(calf.battery_mv);
 
   return (
     <button
-      onClick={() => onClick(calf.tagId)}
+      onClick={onClick}
       className="glass-card rounded-lg p-4 text-left transition-all hover:shadow-md hover:scale-[1.01] w-full"
     >
       <div className="flex items-start justify-between mb-3">
@@ -41,7 +41,7 @@ export const CalfCard = ({ calf, onClick }: CalfCardProps) => {
           <h3 className="font-heading font-semibold text-lg">
             Calf {getCalfLabel(calf)} {genderIcon(calf.gender)}
           </h3>
-          <p className="text-xs text-muted-foreground">{calf.tagId} · {calf.age}</p>
+          <p className="text-xs text-muted-foreground">{calf.tag_id} · {calf.age || 'N/A'}</p>
         </div>
         <Badge variant="outline" className={sc.className}>
           {sc.label}
@@ -70,7 +70,9 @@ export const CalfCard = ({ calf, onClick }: CalfCardProps) => {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground italic">No signal — last seen {calf.lastSeen}</p>
+        <p className="text-sm text-muted-foreground italic">
+          No signal — last seen {calf.last_seen ? new Date(calf.last_seen).toLocaleString() : 'Never'}
+        </p>
       )}
 
       {calf.alerts.length > 0 && (

@@ -1,11 +1,11 @@
-import { CalfTag, getCalfLabel } from '@/data/mockCalves';
+import { CalfWithTelemetry, getCalfLabel } from '@/hooks/useCalves';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Thermometer, Activity, Battery, Signal, Clock, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface CalfDetailDialogProps {
-  calf: CalfTag | null;
+  calf: CalfWithTelemetry | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -24,7 +24,7 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
           <DialogTitle className="font-heading text-xl flex items-center gap-3">
             Calf {getCalfLabel(calf)}
             <Badge variant="outline" className="text-xs">
-              {genderLabel} · {calf.age}
+              {genderLabel} · {calf.age || 'N/A'}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -52,7 +52,7 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
               <Battery className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Battery</p>
-                <p className="font-semibold">{batteryPercent(calf.batteryMv)}% ({calf.batteryMv}mV)</p>
+                <p className="font-semibold">{batteryPercent(calf.battery_mv)}% ({calf.battery_mv}mV)</p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50">
@@ -65,12 +65,12 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
           </div>
 
           {/* Temp chart */}
-          {calf.temperatureHistory.length > 0 && (
+          {calf.temperature_history.length > 0 && (
             <div>
               <h3 className="text-sm font-medium mb-2">Temperature (24h)</h3>
               <div className="h-40 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={calf.temperatureHistory}>
+                  <LineChart data={calf.temperature_history}>
                     <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={3} stroke="hsl(var(--muted-foreground))" />
                     <YAxis domain={[37, 41]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                     <Tooltip
@@ -89,24 +89,12 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
             </div>
           )}
 
-          {/* Activity breakdown */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex-1 p-3 rounded-md bg-success/5 border border-success/20 text-center">
-              <p className="text-xs text-muted-foreground">Active Today</p>
-              <p className="font-semibold">{Math.round(calf.dailyActivityMinutes / 60)}h {calf.dailyActivityMinutes % 60}m</p>
-            </div>
-            <div className="flex-1 p-3 rounded-md bg-info/5 border border-info/20 text-center">
-              <p className="text-xs text-muted-foreground">Rest Today</p>
-              <p className="font-semibold">{Math.round(calf.dailyRestMinutes / 60)}h {calf.dailyRestMinutes % 60}m</p>
-            </div>
-          </div>
-
           {/* Tag info */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Tag className="h-3 w-3" />
-            <span>Tag: {calf.tagId} · MAC: {calf.tagMac}</span>
+            <span>Tag: {calf.tag_id} · MAC: {calf.tag_mac}</span>
             <Clock className="h-3 w-3 ml-3" />
-            <span>Last seen: {calf.lastSeen}</span>
+            <span>Last seen: {calf.last_seen ? new Date(calf.last_seen).toLocaleString() : 'Never'}</span>
           </div>
         </div>
       </DialogContent>

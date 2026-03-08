@@ -1,4 +1,4 @@
-import { HerdStats } from '@/data/mockCalves';
+import { HerdStats } from '@/hooks/useCalves';
 
 interface StatusBarProps {
   stats: HerdStats;
