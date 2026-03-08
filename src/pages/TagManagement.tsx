@@ -7,11 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Tag, Battery, Signal, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, Battery, Signal, Loader2, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { calcAge } from '@/lib/calcAge';
 
 const batteryPercent = (mv: number) => Math.min(100, Math.max(0, Math.round(((mv - 2000) / 1400) * 100)));
 
@@ -27,11 +32,11 @@ interface TagFormData {
   tagMac: string;
   calfNumber: string;
   gender: 'male' | 'female';
-  age: string;
+  birthDate: Date | undefined;
   notes: string;
 }
 
-const emptyForm: TagFormData = { tagId: '', tagMac: '', calfNumber: '', gender: 'female', age: '', notes: '' };
+const emptyForm: TagFormData = { tagId: '', tagMac: '', calfNumber: '', gender: 'female', birthDate: undefined, notes: '' };
 
 const TagManagement = () => {
   const { toast } = useToast();
@@ -58,7 +63,7 @@ const TagManagement = () => {
       tagMac: calf.tag_mac,
       calfNumber: String(calf.calf_number),
       gender: calf.gender,
-      age: calf.age || '',
+      birthDate: calf.birth_date ? new Date(calf.birth_date) : undefined,
       notes: calf.notes || '',
     });
     setDialogOpen(true);
@@ -72,13 +77,16 @@ const TagManagement = () => {
 
     setSaving(true);
     try {
+      const birthDateStr = form.birthDate ? format(form.birthDate, 'yyyy-MM-dd') : null;
+
       if (editingId) {
         const { error } = await supabase.from('calves').update({
           tag_id: form.tagId,
           tag_mac: form.tagMac,
           calf_number: Number(form.calfNumber),
           gender: form.gender,
-          age: form.age || null,
+          birth_date: birthDateStr,
+          age: form.birthDate ? calcAge(form.birthDate) : null,
           notes: form.notes || null,
         }).eq('id', editingId);
 
@@ -91,7 +99,8 @@ const TagManagement = () => {
           tag_mac: form.tagMac,
           calf_number: Number(form.calfNumber),
           gender: form.gender,
-          age: form.age || null,
+          birth_date: birthDateStr,
+          age: form.birthDate ? calcAge(form.birthDate) : null,
           notes: form.notes || null,
         });
 
@@ -147,6 +156,7 @@ const TagManagement = () => {
               <TableHead>Calf #</TableHead>
               <TableHead>Gender</TableHead>
               <TableHead>MAC Address</TableHead>
+              <TableHead>Birth Date</TableHead>
               <TableHead>Age</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Battery</TableHead>
@@ -166,7 +176,10 @@ const TagManagement = () => {
                 <TableCell className="font-heading font-semibold">#{calf.calf_number}</TableCell>
                 <TableCell>{calf.gender === 'male' ? '♂ Male' : '♀ Female'}</TableCell>
                 <TableCell className="font-mono text-xs">{calf.tag_mac}</TableCell>
-                <TableCell>{calf.age || 'N/A'}</TableCell>
+                <TableCell className="text-sm">
+                  {calf.birth_date ? format(new Date(calf.birth_date), 'MMM d, yyyy') : '—'}
+                </TableCell>
+                <TableCell>{calf.birth_date ? calcAge(calf.birth_date) : (calf.age || 'N/A')}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={statusColors[calf.status]}>
                     {calf.status}
@@ -202,7 +215,7 @@ const TagManagement = () => {
             ))}
             {calves.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   No tags registered. Click "Add Tag" to get started.
                 </TableCell>
               </TableRow>
@@ -245,8 +258,38 @@ const TagManagement = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Age</Label>
-              <Input placeholder="3 weeks" value={form.age} onChange={e => setForm(f => ({ ...f, age: e.target.value }))} />
+              <Label>Birth Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !form.birthDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {form.birthDate ? (
+                      <>
+                        {format(form.birthDate, 'PPP')}
+                        <span className="ml-auto text-xs text-muted-foreground">{calcAge(form.birthDate)}</span>
+                      </>
+                    ) : (
+                      <span>Pick birth date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.birthDate}
+                    onSelect={(date) => setForm(f => ({ ...f, birthDate: date }))}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Notes (optional)</Label>

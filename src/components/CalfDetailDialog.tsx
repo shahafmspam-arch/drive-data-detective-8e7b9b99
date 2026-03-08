@@ -1,4 +1,5 @@
 import { CalfWithTelemetry, getCalfLabel } from '@/hooks/useCalves';
+import { calcAge } from '@/lib/calcAge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Thermometer, Activity, Battery, Signal, Clock, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ const batteryPercent = (mv: number) => Math.min(100, Math.max(0, Math.round(((mv
 export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogProps) => {
   if (!calf) return null;
 
+  const age = calf.birth_date ? calcAge(calf.birth_date) : (calf.age || 'N/A');
   const genderLabel = calf.gender === 'male' ? '♂ Male' : '♀ Female';
 
   return (
@@ -24,7 +26,7 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
           <DialogTitle className="font-heading text-xl flex items-center gap-3">
             Calf {getCalfLabel(calf)}
             <Badge variant="outline" className="text-xs">
-              {genderLabel} · {calf.age || 'N/A'}
+              {genderLabel} · {age}
             </Badge>
           </DialogTitle>
         </DialogHeader>
