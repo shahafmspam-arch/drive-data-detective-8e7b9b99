@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Calves from "./pages/Calves";
 import TagManagement from "./pages/TagManagement";
+import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Wifi, LogOut, Loader2 } from "lucide-react";
