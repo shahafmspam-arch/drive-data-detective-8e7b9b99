@@ -5,7 +5,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, Loader2, AlertTriangle, Settings2, Wrench } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutConfiguration } from '@/components/LayoutConfiguration';
 
 const Settings = () => {
   const { session } = useAuth();
@@ -19,7 +21,6 @@ const Settings = () => {
     if (!userId) return;
     setClearing(true);
     try {
-      // Delete in order: alerts & telemetry first (FK), then calves
       const { data: calves } = await supabase.from('calves').select('id').eq('user_id', userId);
       const calfIds = calves?.map(c => c.id) || [];
 
@@ -44,26 +45,45 @@ const Settings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading font-bold text-2xl">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your farm configuration</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage your farm configuration and layout preferences</p>
       </div>
 
-      <div className="glass-card rounded-lg p-6 space-y-4">
-        <div>
-          <h2 className="font-heading font-semibold text-lg">Account</h2>
-          <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
-        </div>
-      </div>
+      <Tabs defaultValue="configuration" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="configuration" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            Configuration
+          </TabsTrigger>
+          <TabsTrigger value="account" className="gap-2">
+            <Wrench className="h-4 w-4" />
+            Account & Data
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="glass-card rounded-lg p-6 border-destructive/20">
-        <h2 className="font-heading font-semibold text-lg text-destructive mb-2">Danger Zone</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Clear all calves, telemetry readings, and alerts from your account. This action cannot be undone.
-        </p>
-        <Button variant="destructive" onClick={() => setConfirmOpen(true)} className="gap-2">
-          <Trash2 className="h-4 w-4" />
-          Clear All Data
-        </Button>
-      </div>
+        <TabsContent value="configuration">
+          <LayoutConfiguration />
+        </TabsContent>
+
+        <TabsContent value="account" className="space-y-6">
+          <div className="glass-card rounded-lg p-6 space-y-4">
+            <div>
+              <h2 className="font-heading font-semibold text-lg">Account</h2>
+              <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-lg p-6 border-destructive/20">
+            <h2 className="font-heading font-semibold text-lg text-destructive mb-2">Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Clear all calves, telemetry readings, and alerts from your account. This action cannot be undone.
+            </p>
+            <Button variant="destructive" onClick={() => setConfirmOpen(true)} className="gap-2">
+              <Trash2 className="h-4 w-4" />
+              Clear All Data
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
