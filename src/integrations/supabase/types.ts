@@ -162,6 +162,54 @@ export type Database = {
           },
         ]
       }
+      threshold_settings: {
+        Row: {
+          created_at: string
+          high_temp_enabled: boolean
+          high_temp_threshold: number
+          id: string
+          low_step_daily_min: number
+          low_step_enabled: boolean
+          low_voltage_enabled: boolean
+          low_voltage_threshold: number
+          mac_prefix: string
+          offline_enabled: boolean
+          offline_seconds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          high_temp_enabled?: boolean
+          high_temp_threshold?: number
+          id?: string
+          low_step_daily_min?: number
+          low_step_enabled?: boolean
+          low_voltage_enabled?: boolean
+          low_voltage_threshold?: number
+          mac_prefix?: string
+          offline_enabled?: boolean
+          offline_seconds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          high_temp_enabled?: boolean
+          high_temp_threshold?: number
+          id?: string
+          low_step_daily_min?: number
+          low_step_enabled?: boolean
+          low_voltage_enabled?: boolean
+          low_voltage_threshold?: number
+          mac_prefix?: string
+          offline_enabled?: boolean
+          offline_seconds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
