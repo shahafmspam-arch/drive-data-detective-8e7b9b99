@@ -211,7 +211,7 @@ const TagManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {calves.map(calf => (
+            {sorted.map(calf => (
               <TableRow key={calf.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
