@@ -44,6 +44,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
                 <Wifi className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">Gateway Online</span>
               </div>
+              <ProfilePopover textColor={config.topbarTextColor} />
               <Button
                 variant="ghost"
                 size="icon"
