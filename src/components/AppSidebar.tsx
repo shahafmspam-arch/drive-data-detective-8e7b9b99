@@ -1,4 +1,4 @@
-import { LayoutDashboard, Tags, Settings, Heart } from 'lucide-react';
+import { LayoutDashboard, Tags, Settings, Heart, Beef } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
