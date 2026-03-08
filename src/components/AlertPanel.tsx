@@ -47,7 +47,7 @@ export const AlertPanel = ({ alerts }: AlertPanelProps) => {
               >
                 <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${isCritical ? 'text-destructive' : 'text-warning'}`} />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{alert.calfName}</p>
+                  <p className="text-sm font-medium">{alert.calfLabel}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
                   <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
                 </div>
