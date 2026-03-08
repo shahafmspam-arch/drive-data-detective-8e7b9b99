@@ -38,6 +38,42 @@ interface TagFormData {
 
 const emptyForm: TagFormData = { tagId: '', tagMac: '', calfNumber: '', gender: 'female', birthDate: undefined, notes: '' };
 
+type SortKey = 'tag_id' | 'calf_number' | 'gender' | 'birth_date' | 'status' | 'battery_mv' | 'rssi';
+type SortDir = 'asc' | 'desc';
+
+const statusOrder: Record<string, number> = { critical: 0, warning: 1, healthy: 2, offline: 3 };
+
+function sortTags(calves: CalfWithTelemetry[], key: SortKey, dir: SortDir): CalfWithTelemetry[] {
+  return [...calves].sort((a, b) => {
+    let cmp = 0;
+    switch (key) {
+      case 'tag_id': cmp = a.tag_id.localeCompare(b.tag_id); break;
+      case 'calf_number': cmp = a.calf_number - b.calf_number; break;
+      case 'gender': cmp = a.gender.localeCompare(b.gender); break;
+      case 'birth_date': cmp = (a.birth_date || '').localeCompare(b.birth_date || ''); break;
+      case 'status': cmp = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9); break;
+      case 'battery_mv': cmp = a.battery_mv - b.battery_mv; break;
+      case 'rssi': cmp = a.rssi - b.rssi; break;
+    }
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
+const SortableHead = ({ label, sortKey, currentKey, currentDir, onSort }: {
+  label: string; sortKey: SortKey; currentKey: SortKey; currentDir: SortDir;
+  onSort: (key: SortKey) => void;
+}) => {
+  const active = currentKey === sortKey;
+  return (
+    <TableHead>
+      <Button variant="ghost" size="sm" className="gap-1 -ml-3 h-8 font-medium" onClick={() => onSort(sortKey)}>
+        {label}
+        {active ? (currentDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+      </Button>
+    </TableHead>
+  );
+};
+
 const TagManagement = () => {
   const { toast } = useToast();
   const { session } = useAuth();
@@ -47,6 +83,16 @@ const TagManagement = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TagFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('calf_number');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const sorted = useMemo(() => sortTags(calves, sortKey, sortDir), [calves, sortKey, sortDir]);
+  const headProps = { currentKey: sortKey, currentDir: sortDir, onSort: handleSort };
 
   const userId = session?.user?.id;
 
