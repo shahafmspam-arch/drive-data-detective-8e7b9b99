@@ -1,10 +1,10 @@
-import { CalfData, CalfStatus } from '@/data/mockCalves';
+import { CalfTag, CalfStatus, getCalfLabel } from '@/data/mockCalves';
 import { Thermometer, Activity, Battery, Signal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface CalfCardProps {
-  calf: CalfData;
-  onClick: (id: string) => void;
+  calf: CalfTag;
+  onClick: (tagId: string) => void;
 }
 
 const statusConfig: Record<CalfStatus, { label: string; className: string }> = {
@@ -14,7 +14,7 @@ const statusConfig: Record<CalfStatus, { label: string; className: string }> = {
   offline: { label: 'Offline', className: 'bg-muted text-muted-foreground border-muted' },
 };
 
-const activityIcon = (activity: CalfData['activity']) => {
+const activityIcon = (activity: CalfTag['activity']) => {
   if (activity === 'active') return '🟢';
   if (activity === 'resting') return '🔵';
   return '⚪';
@@ -25,19 +25,23 @@ const batteryPercent = (mv: number) => {
   return Math.min(100, Math.max(0, Math.round(((mv - 2000) / 1400) * 100)));
 };
 
+const genderIcon = (g: CalfTag['gender']) => g === 'male' ? '♂' : '♀';
+
 export const CalfCard = ({ calf, onClick }: CalfCardProps) => {
   const sc = statusConfig[calf.status];
   const bp = batteryPercent(calf.batteryMv);
 
   return (
     <button
-      onClick={() => onClick(calf.id)}
+      onClick={() => onClick(calf.tagId)}
       className="glass-card rounded-lg p-4 text-left transition-all hover:shadow-md hover:scale-[1.01] w-full"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-heading font-semibold text-lg">{calf.name}</h3>
-          <p className="text-xs text-muted-foreground">{calf.breed} · {calf.age}</p>
+          <h3 className="font-heading font-semibold text-lg">
+            Calf {getCalfLabel(calf)} {genderIcon(calf.gender)}
+          </h3>
+          <p className="text-xs text-muted-foreground">{calf.tagId} · {calf.age}</p>
         </div>
         <Badge variant="outline" className={sc.className}>
           {sc.label}

@@ -1,11 +1,11 @@
-import { CalfData } from '@/data/mockCalves';
+import { CalfTag, getCalfLabel } from '@/data/mockCalves';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Thermometer, Activity, Battery, Signal, Clock, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface CalfDetailDialogProps {
-  calf: CalfData | null;
+  calf: CalfTag | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -15,14 +15,16 @@ const batteryPercent = (mv: number) => Math.min(100, Math.max(0, Math.round(((mv
 export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogProps) => {
   if (!calf) return null;
 
+  const genderLabel = calf.gender === 'male' ? '♂ Male' : '♀ Female';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl flex items-center gap-3">
-            {calf.name}
+            Calf {getCalfLabel(calf)}
             <Badge variant="outline" className="text-xs">
-              {calf.breed} · {calf.age}
+              {genderLabel} · {calf.age}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -102,7 +104,7 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
           {/* Tag info */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Tag className="h-3 w-3" />
-            <span>MAC: {calf.tagMac}</span>
+            <span>Tag: {calf.tagId} · MAC: {calf.tagMac}</span>
             <Clock className="h-3 w-3 ml-3" />
             <span>Last seen: {calf.lastSeen}</span>
           </div>
