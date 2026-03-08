@@ -72,6 +72,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Index />} />
         <Route path="/calves" element={<Calves />} />
         <Route path="/tags" element={<TagManagement />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
