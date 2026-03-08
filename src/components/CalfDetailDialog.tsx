@@ -26,7 +26,7 @@ export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogP
           <DialogTitle className="font-heading text-xl flex items-center gap-3">
             Calf {getCalfLabel(calf)}
             <Badge variant="outline" className="text-xs">
-              {genderLabel} · {calf.age || 'N/A'}
+              {genderLabel} · {age}
             </Badge>
           </DialogTitle>
         </DialogHeader>

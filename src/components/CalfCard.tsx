@@ -42,7 +42,7 @@ export const CalfCard = ({ calf, onClick }: CalfCardProps) => {
           <h3 className="font-heading font-semibold text-lg">
             Calf {getCalfLabel(calf)} {genderIcon(calf.gender)}
           </h3>
-          <p className="text-xs text-muted-foreground">{calf.tag_id} · {calf.age || 'N/A'}</p>
+          <p className="text-xs text-muted-foreground">{calf.tag_id} · {calf.birth_date ? calcAge(calf.birth_date) : (calf.age || 'N/A')}</p>
         </div>
         <Badge variant="outline" className={sc.className}>
           {sc.label}
