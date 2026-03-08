@@ -1,4 +1,4 @@
-import { LayoutDashboard, Tags, Settings, Heart } from 'lucide-react';
+import { LayoutDashboard, Tags, Settings, Heart, Beef } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import {
 
 const menuItems = [
   { title: 'Overview', url: '/', icon: LayoutDashboard },
+  { title: 'Calves', url: '/calves', icon: Beef },
   { title: 'Tag Management', url: '/tags', icon: Tags },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
