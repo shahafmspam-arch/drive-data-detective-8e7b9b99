@@ -1,4 +1,5 @@
 import { CalfWithTelemetry, getCalfLabel } from '@/hooks/useCalves';
+import { calcAge } from '@/lib/calcAge';
 import { Thermometer, Activity, Battery, Signal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
