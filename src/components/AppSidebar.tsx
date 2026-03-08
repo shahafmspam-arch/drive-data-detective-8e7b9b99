@@ -16,6 +16,7 @@ import {
 
 const menuItems = [
   { title: 'Overview', url: '/', icon: LayoutDashboard },
+  { title: 'Calves', url: '/calves', icon: Beef },
   { title: 'Tag Management', url: '/tags', icon: Tags },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];

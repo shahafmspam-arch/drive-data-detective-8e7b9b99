@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
+import Calves from "./pages/Calves";
 import TagManagement from "./pages/TagManagement";
 import NotFound from "./pages/NotFound";
 import { Wifi } from "lucide-react";
