@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     }
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: 'user@calfwatch.com',
+      email: 'test@gamil.com',
       password: '123',
       email_confirm: true,
       user_metadata: { display_name: 'User', farm_name: 'My Farm' },
