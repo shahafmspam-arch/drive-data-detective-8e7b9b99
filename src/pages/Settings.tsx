@@ -5,9 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Loader2, AlertTriangle, Settings2, Wrench } from 'lucide-react';
+import { Trash2, Loader2, AlertTriangle, Settings2, Wrench, Gauge } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutConfiguration } from '@/components/LayoutConfiguration';
+import { ThresholdConfiguration } from '@/components/ThresholdConfiguration';
 
 const Settings = () => {
   const { session } = useAuth();
@@ -48,17 +49,25 @@ const Settings = () => {
         <p className="text-sm text-muted-foreground mt-1">Manage your farm configuration and layout preferences</p>
       </div>
 
-      <Tabs defaultValue="configuration" className="w-full">
+      <Tabs defaultValue="thresholds" className="w-full">
         <TabsList className="mb-4">
+          <TabsTrigger value="thresholds" className="gap-2">
+            <Gauge className="h-4 w-4" />
+            Thresholds
+          </TabsTrigger>
           <TabsTrigger value="configuration" className="gap-2">
             <Settings2 className="h-4 w-4" />
-            Configuration
+            Layout
           </TabsTrigger>
           <TabsTrigger value="account" className="gap-2">
             <Wrench className="h-4 w-4" />
             Account & Data
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="thresholds">
+          <ThresholdConfiguration />
+        </TabsContent>
 
         <TabsContent value="configuration">
           <LayoutConfiguration />
