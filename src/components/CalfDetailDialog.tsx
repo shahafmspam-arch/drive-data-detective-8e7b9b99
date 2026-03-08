@@ -16,6 +16,7 @@ const batteryPercent = (mv: number) => Math.min(100, Math.max(0, Math.round(((mv
 export const CalfDetailDialog = ({ calf, open, onOpenChange }: CalfDetailDialogProps) => {
   if (!calf) return null;
 
+  const age = calf.birth_date ? calcAge(calf.birth_date) : (calf.age || 'N/A');
   const genderLabel = calf.gender === 'male' ? '♂ Male' : '♀ Female';
 
   return (
