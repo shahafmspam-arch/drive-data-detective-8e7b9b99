@@ -59,7 +59,6 @@ function deriveStatus(temp: number, alerts: CalfAlert[], lastSeen: string | null
 }
 
 async function fetchCalvesWithTelemetry(userId: string): Promise<CalfWithTelemetry[]> {
-  // Fetch calves
   const { data: calves, error: calvesErr } = await supabase
     .from('calves')
     .select('*')
@@ -70,8 +69,6 @@ async function fetchCalvesWithTelemetry(userId: string): Promise<CalfWithTelemet
 
   const calfIds = calves.map(c => c.id);
 
-  // Fetch latest telemetry for each calf (last reading)
-  // We'll get recent telemetry and pick the latest per calf
   const { data: telemetry, error: telErr } = await supabase
     .from('telemetry')
     .select('*')
@@ -81,7 +78,6 @@ async function fetchCalvesWithTelemetry(userId: string): Promise<CalfWithTelemet
 
   if (telErr) throw telErr;
 
-  // Fetch active (unacknowledged) alerts
   const { data: alerts, error: alertErr } = await supabase
     .from('alerts')
     .select('*')
@@ -109,12 +105,16 @@ async function fetchCalvesWithTelemetry(userId: string): Promise<CalfWithTelemet
   return calves.map(calf => {
     const calfTelemetry = telByCalf.get(calf.id) || [];
     const latest = calfTelemetry[0]; // Already sorted desc
+
+    // Use last known non-zero battery (tags only broadcast it occasionally)
+    const lastKnownBattery = calfTelemetry.find(t => t.battery_mv > 0)?.battery_mv || 0;
+
     const calfAlerts = alertsByCalf.get(calf.id) || [];
 
-    // Build 24h temperature history
+    // Build 24h temperature history (only real readings)
     const tempHistory = calfTelemetry
       .filter((t: any) => t.temperature > 0)
-      .slice(0, 288) // max ~24h at 5min intervals
+      .slice(0, 288)
       .reverse()
       .map((t: any) => ({
         time: new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -137,7 +137,7 @@ async function fetchCalvesWithTelemetry(userId: string): Promise<CalfWithTelemet
       motion_state: latest ? latest.motion_state : 0,
       activity: latest?.activity || 'inactive',
       rssi: latest?.rssi || 0,
-      battery_mv: latest?.battery_mv || 0,
+      battery_mv: lastKnownBattery,
       last_seen: lastSeen,
       status: deriveStatus(latest ? Number(latest.temperature) : 0, calfAlerts, lastSeen),
       temperature_history: tempHistory,
@@ -155,10 +155,9 @@ export function useCalves() {
     queryKey: ['calves', userId],
     queryFn: () => fetchCalvesWithTelemetry(userId!),
     enabled: !!userId,
-    refetchInterval: 60000, // Also poll every 60s as fallback
+    refetchInterval: 60000,
   });
 
-  // Realtime subscription for telemetry & alerts
   useEffect(() => {
     if (!userId) return;
 
@@ -180,7 +179,6 @@ export function useCalves() {
     };
   }, [userId, queryClient]);
 
-  // Compute herd stats
   const calves = query.data || [];
   const onlineCalves = calves.filter(c => c.status !== 'offline');
 
